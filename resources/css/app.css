@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ── */
+@layer base {
+    html, body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+}
+
+/* ── Custom utilities yang tidak bisa diekspresikan murni via Tailwind ── */
+@layer utilities {
+    /* Animasi row masuk */
+    @keyframes rowIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .row-visible {
+        animation: rowIn 0.22s ease both;
+    }
+
+    /* Webkit scrolling */
+    .-webkit-overflow-scrolling-touch {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ── Chip filter active state (dipakai JS dengan .active class) ── */
+.chip.active {
+    @apply bg-blue-50 border-blue-400 text-blue-700 font-semibold;
+}
+
+.chip-completed.active {
+    @apply bg-green-50 border-green-400 text-green-700;
+}
+
+/* ── FullCalendar minimal style override ── */
+.fc .fc-button {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+}
+
+.fc .fc-button:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+.fc .fc-button-active {
+    background: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    color: #0f172a !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    color: #64748b !important;
+    text-decoration: none !important;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    text-decoration: none !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background: #eff6ff !important;
+}
+
+.fc-event {
+    border-radius: 5px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 1px 5px !important;
+    border: none !important;
+    cursor: pointer;
+}
+
+/* ── Pagination styling ── */
+nav[aria-label="Pagination"] {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+nav[aria-label="Pagination"] a,
+nav[aria-label="Pagination"] span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.15s;
+    background: #fff;
+}
+
+nav[aria-label="Pagination"] a:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+nav[aria-label="Pagination"] span[aria-current="page"] {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ── Prose area (notulensi) ── */
+.prose-area {
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: #334155;
+}
+
+.prose-area h1, .prose-area h2, .prose-area h3 {
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 1.25em;
+    margin-bottom: 0.5em;
+}
+
+.prose-area p { margin-bottom: 0.75em; }
+.prose-area ul, .prose-area ol { padding-left: 1.25em; margin-bottom: 0.75em; }
+.prose-area li { margin-bottom: 0.25em; }
+
+/* ── Status pill radio button ── */
+label:has(input[type="radio"]:checked) .status-dot {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* ── Mobile: FullCalendar ── */
+@media (max-width: 1024px) {
+    .fc .fc-toolbar {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 14px !important;
+    }
+    .fc .fc-button {
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 639px) {
+    .fc .fc-toolbar-title {
+        font-size: 13px !important;
+    }
+    .fc .fc-button {
+        padding: 3px 7px !important;
+        font-size: 11px !important;
+    }
+    .fc .fc-toolbar {
+        gap: 4px;
+        margin-bottom: 8px !important;
+    }
+    .fc .fc-col-header-cell-cushion {
+        font-size: 10px !important;
+        padding: 3px 1px !important;
+    }
+    .fc .fc-daygrid-day-top {
+        font-size: 10px !important;
+    }
+    .fc .fc-daygrid-day-frame {
+        min-height: 44px !important;
+    }
+    .fc-event {
+        font-size: 9px !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+    }
+}

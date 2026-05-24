@@ -1,0 +1,59 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\MeetingQuestionController;
+use App\Http\Controllers\DashboardController;
+
+
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+});
+
+Route::middleware('auth')->group(function () {
+
+    // ⚠️  Route spesifik HARUS di atas resource agar tidak tertimpa oleh
+    //     DELETE /meetings/{meeting} → destroy() milik resource.
+    Route::delete('/meetings/{meeting}/dokumentasi',
+        [MeetingController::class, 'deleteDokumentasi'])
+        ->name('meetings.dokumentasi.delete');
+
+    Route::delete('/meetings/{meeting}/surat',
+        [MeetingController::class, 'deleteSurat'])
+        ->name('meetings.surat.delete');
+
+    Route::get('/meetings/{meeting}/pdf',
+        [MeetingController::class, 'exportPdf'])
+        ->name('meetings.pdf');
+
+    Route::resource('meetings', MeetingController::class);
+
+    // ── RISIKO #3 SEDANG: Rate limiting pada endpoint AJAX ──────────────────
+    // throttle:30,1 → maksimal 30 request per menit per user.
+    // Mencegah spam pertanyaan/jawaban dari client manapun.
+    Route::middleware(['throttle:30,1'])->group(function () {
+        Route::post('/meetings/{meeting}/questions',
+            [MeetingQuestionController::class, 'store'])
+            ->name('questions.store');
+
+        Route::post('/questions/{question}/reply',
+            [MeetingQuestionController::class, 'reply'])
+            ->name('questions.reply');
+    });
+});
+
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::resource('users', UserController::class);
+});
+
+
+require __DIR__.'/auth.php';
