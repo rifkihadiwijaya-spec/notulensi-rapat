@@ -223,6 +223,21 @@
                                         Edit
                                     </a>
                                 @endcan
+                                @if(auth()->id() === $meeting->created_by)
+                                    <button type="button"
+                                            onclick="konfirmasiHapus({{ $meeting->id }}, '{{ addslashes($meeting->judul) }}')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold cursor-pointer font-[inherit]
+                                                   bg-red-50 text-red-600 border border-red-200 transition-all duration-150
+                                                   hover:bg-red-500 hover:text-white hover:border-red-500">
+                                        <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                            <path d="M10 11v6"/><path d="M14 11v6"/>
+                                            <path d="M9 6V4h6v2"/>
+                                        </svg>
+                                        Hapus
+                                    </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -256,5 +271,65 @@
         <div class="px-6 py-4 border-t border-slate-100">{{ $meetings->links() }}</div>
     @endif
 </div>
+{{-- Hidden delete form --}}
+<form id="form-hapus-rapat" method="POST" class="hidden">
+  @csrf
+  @method('DELETE')
+</form>
+
+{{-- Modal konfirmasi hapus rapat --}}
+<div id="modal-hapus-rapat" class="hidden fixed inset-0 bg-[rgba(15,23,42,0.55)] backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] w-full max-w-[400px] p-6 max-sm:max-w-[calc(100%-32px)]">
+    <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-red-50 border-2 border-red-100 mx-auto mb-4">
+      <svg class="w-6 h-6 stroke-red-500 fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+    </div>
+    <div class="text-[17px] font-extrabold text-slate-900 text-center mb-2 tracking-tight">Hapus Rapat?</div>
+    <div class="text-[13px] text-slate-500 text-center mb-1 leading-relaxed">
+      Rapat <strong id="modal-hapus-judul" class="text-slate-800 font-semibold"></strong> akan dihapus permanen beserta seluruh data, dokumentasi, dan surat undangannya.
+    </div>
+    <div class="text-[12px] text-red-500 text-center mb-6 font-medium">Tindakan ini tidak dapat dibatalkan.</div>
+    <div class="flex gap-2.5 max-sm:flex-col">
+      <button type="button" id="modal-hapus-batal"
+              class="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-[13px] font-semibold
+                     bg-white border-2 border-slate-200 text-slate-600 cursor-pointer font-[inherit]
+                     transition-all duration-150 hover:bg-slate-50 hover:border-slate-300">Batal</button>
+      <button type="button" id="modal-hapus-konfirm"
+              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold
+                     bg-gradient-to-br from-red-500 to-red-600 text-white border-none cursor-pointer font-[inherit]
+                     shadow-[0_4px_14px_rgba(239,68,68,0.28)] transition-all duration-150 hover:from-red-600 hover:to-red-700">
+        <svg class="w-[13px] h-[13px] stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        </svg>
+        Ya, Hapus Rapat
+      </button>
+    </div>
+  </div>
+</div>
+
+@push('scripts')
+<script>
+function konfirmasiHapus(id, judul) {
+  document.getElementById('modal-hapus-judul').textContent = judul;
+  document.getElementById('form-hapus-rapat').action = '/meetings/' + id;
+  document.getElementById('modal-hapus-rapat').classList.remove('hidden');
+}
+document.getElementById('modal-hapus-batal').addEventListener('click', function() {
+  document.getElementById('modal-hapus-rapat').classList.add('hidden');
+});
+document.getElementById('modal-hapus-konfirm').addEventListener('click', function() {
+  document.getElementById('form-hapus-rapat').submit();
+});
+// Tutup modal kalau klik backdrop
+document.getElementById('modal-hapus-rapat').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.add('hidden');
+});
+</script>
+@endpush
 
 </x-app-layout>

@@ -57,6 +57,9 @@ class MeetingController extends Controller
             'jenis'           => 'required|string|max:255',
             'topik'           => 'nullable|string',
             'partisipan'      => 'nullable|string',
+            'notulensi'       => 'nullable|string',
+            'dokumentasi'     => 'nullable|array',
+            'dokumentasi.*'   => 'image|mimes:jpg,jpeg,png,webp|max:3072',
             // ── Surat Undangan ──────────────────────────────────────
             'surat_undangan'  => 'nullable|file|mimes:pdf|max:5120', // maks 5 MB
         ]);
@@ -69,7 +72,15 @@ class MeetingController extends Controller
             $suratNama = $file->getClientOriginalName();
         }
 
-        Meeting::create([
+        // Status otomatis 'completed' hanya jika notulensi sudah diedit dari template default.
+        // Normalisasi: hapus semua whitespace agar perbedaan spasi/newline dari TinyMCE diabaikan.
+        $notulensiDefault = '<h2><strong>Latar Belakang</strong></h2><p>Uraikan latar belakang dan tujuan diselenggarakannya rapat ini.</p><h2><strong>Peserta Rapat</strong></h2><p>Daftar peserta yang hadir dalam rapat ini.</p><h2><strong>Isi Rapat</strong></h2><h3>1. Pembahasan Agenda Pertama</h3><p>Uraikan hasil pembahasan agenda pertama secara singkat dan jelas.</p><h3>2. Pembahasan Agenda Kedua</h3><p>Uraikan hasil pembahasan agenda kedua secara singkat dan jelas.</p><h2><strong>Kesimpulan</strong></h2><p>Tuliskan kesimpulan dan tindak lanjut yang disepakati dalam rapat.</p>';
+        $normalize        = fn(string $s): string => preg_replace('/\s+/', '', $s);
+        $submitted        = $normalize($request->notulensi ?? '');
+        $isDefault        = $submitted === '' || $submitted === $normalize($notulensiDefault);
+        $status           = $isDefault ? 'scheduled' : 'completed';
+
+        $meeting = Meeting::create([
             'judul'               => $request->judul,
             'tanggal'             => $request->tanggal,
             'waktu'               => $request->waktu,
@@ -77,7 +88,8 @@ class MeetingController extends Controller
             'jenis'               => $request->jenis,
             'topik'               => $request->topik,
             'partisipan'          => $request->partisipan,
-            'status'              => 'scheduled',
+            'notulensi'           => $request->notulensi,
+            'status'              => $status,
             'created_by'          => auth()->id(),
             'creator_name'        => auth()->user()->name,
             'notulen'             => auth()->id(),
@@ -86,6 +98,18 @@ class MeetingController extends Controller
             'surat_undangan'      => $suratPath,
             'surat_undangan_nama' => $suratNama,
         ]);
+
+        // Simpan foto dokumentasi jika ada
+        if ($request->hasFile('dokumentasi')) {
+            foreach ($request->file('dokumentasi') as $file) {
+                $path = $file->store('dokumentasi', 'public');
+                MeetingDokumentasi::create([
+                    'meeting_id' => $meeting->id,
+                    'nama_file'  => $file->getClientOriginalName(),
+                    'path_file'  => $path,
+                ]);
+            }
+        }
 
         return redirect()->route('meetings.index')->with('success', 'Rapat Berhasil Dibuat');
     }
@@ -184,6 +208,30 @@ class MeetingController extends Controller
         ]);
 
         return back()->with('success', 'Surat undangan berhasil dihapus');
+    }
+
+    public function destroy(Meeting $meeting)
+    {
+        // Hanya notulis yang membuat rapat ini yang boleh menghapus
+        if (auth()->id() !== $meeting->created_by) {
+            abort(403, 'Anda tidak memiliki izin untuk menghapus rapat ini.');
+        }
+
+        // Hapus surat undangan jika ada
+        if ($meeting->surat_undangan) {
+            \Storage::disk('public')->delete($meeting->surat_undangan);
+        }
+
+        // Hapus semua foto dokumentasi
+        foreach ($meeting->dokumentasi as $dok) {
+            \Storage::disk('public')->delete($dok->path_file);
+            $dok->delete();
+        }
+
+        $meeting->delete();
+
+        return redirect()->route('meetings.index')
+            ->with('success', 'Rapat berhasil dihapus.');
     }
 
     public function exportPdf(Meeting $meeting)
